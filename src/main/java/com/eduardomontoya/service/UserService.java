@@ -26,17 +26,19 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public User getUserById(Long id) {
-        return userRepository.findById(id).get();
+    public Optional<User> getUserById(Long id) {
+        return userRepository.findById(id);
     }
 
-    public void createUser(User user) {
-        User newUser = new User(
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail()
-        );
-        userRepository.save(newUser);
+    public Optional<User> createUser(User user) {
+        Optional<User> isNewUser = userRepository.findUserByEmail(user.getEmail());
+
+        if (!isNewUser.isEmpty()) {
+            throw new IllegalStateException("User email already been used");
+        }
+
+        userRepository.save(user);
+        return userRepository.findUserByEmail(user.getEmail());
     }
 
     public Optional<User> getUserByFirstName(String firstName) {
@@ -47,5 +49,15 @@ public class UserService {
         }
 
         return userByFirstName;
+    }
+
+    public void deleteUserByEmail(String email) {
+        Optional<User> deletedUser = userRepository.findUserByEmail(email);
+
+        if (!deletedUser.isPresent()) {
+            throw new IllegalStateException("User's email does not exist");
+        }
+
+        userRepository.delete(deletedUser.get());
     }
 }
